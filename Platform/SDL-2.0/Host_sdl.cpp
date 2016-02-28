@@ -35,6 +35,15 @@ const int N_TEXTURE = 2;
 const int N_TEXTURE = 1;
 #endif
 
+#if _MSC_VER >= 1900
+// Work-around for SDL2 compiled against VS2013
+FILE _iob[] ={ *stdin, *stdout, *stderr };
+
+extern "C" FILE * __cdecl __iob_func(void) {
+    return _iob;
+}
+#endif
+
 static void ReportResourceError( const char* routine, const char* resourceName, const char* error ) {
     std::printf( "Internal error: %s failed %s: %s\n", routine, resourceName, error );
     HostExit();
