@@ -3,9 +3,9 @@
 #include "AssertLib.h"
 #include <cmath>
 
-const size_t N_HANDLE_MAX = 2*N_PARTICLE_MAX;
+// 3 = tail + head + circle
+const size_t N_HANDLE_MAX = 3*N_PARTICLE_MAX;
 
-// 2 = tail + head
 static Handle HandleBuf[N_HANDLE_MAX];
 static float HandleX[N_HANDLE_MAX];
 static float HandleY[N_HANDLE_MAX];

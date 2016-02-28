@@ -90,6 +90,10 @@ const char* GameTitle() {
     ;
 }
 
+static float Rand() {
+    return float(rand())*(1.0f/RAND_MAX);
+}
+
 void GameKeyDown( int key ) {
     Assert( !('A'<=key && key<='Z') );  // Alphabetic key should be lower case.
     switch(key) {
@@ -108,6 +112,20 @@ void GameKeyDown( int key ) {
         case '0':
             SetZoom(0, WindowWidth/2, WindowHeight/2);
             break;
+        case 'm': {
+            using namespace Universe;
+            size_t k = NParticle;
+            if( k<N_PARTICLE_MAX ) {
+                Charge[k] =  Rand()<0.5 ? 1 : -1;
+                Mass[k] = 1;
+                Sx[k] = Rand();
+                Sy[k] = Rand();
+                Vx[k] =  Rand() - 0.5; 
+                Vy[k] = Rand() - 0.5;
+                ++NParticle;
+            }
+            break;
+        }
 #if 0
         case HOST_KEY_RETURN:
             VisibleDialog = NULL;
@@ -148,7 +166,7 @@ void GameKeyDown( int key ) {
 static bool MouseIsDown;
 static float MousePointX, MousePointY, MouseScalar;
 
-static int HandleTolerance = 20;    // FIXME - scale to screen size
+static int HandleTolerance = 10;    // FIXME - scale to screen size
 
 static void SelectHandle( int x, int y ) {
     SelectedHandle = HandleBufFind(x,y,HandleTolerance,Handle::maskAll); 
