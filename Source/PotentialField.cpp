@@ -21,29 +21,35 @@ Universe::Float EvaluatePotential(float x, float y) {
     return p*(chargeScale*2/CLUT_SIZE);
 }
 
+// Particle parameters required for rendering.
+struct Particle {
+    float sx, sy, charge;
+};
+
+// Storage for particle records
+static Particle ParticleArray[N_PARTICLE_MAX];
+
+// Partition particles by their x coordinate
+static Particle* PartitionByX(Particle* first, Particle* last, float xcenter ) {
+    return std::partition(first, last, [xcenter](const Particle& p) {return p.sx<xcenter;});
+}
+
+// Partition particles by their y coordindate
+static Particle* PartitionByY(Particle* first, Particle* last, float ycenter) {
+    return std::partition(first, last, [ycenter](const Particle& p) {return p.sy<ycenter; });
+}
+
+// Node in a quadtree
 struct Node {
-    float sx, sy, charge;   // Far-field parameters if non-leaf, particle if leaf
-    float r;                // Width of node. 0 for leaf.
-    Node* child[4];         // null for empty node
+    float sx, sy, charge;   // Far-field parameters if non-leaf, particle state if leaf
+    float r;                // Half-width of box along longest dimension. 0 for leaf.
+    float cx, cy;           // Center of box (valid only for non-leaf)
+    Node* child[4];         // Pointers to children (possibly null).  Valid only for non-leaf.
 };
 
 static const size_t NodeArraySize = 2*N_PARTICLE_MAX;
 static Node NodeArray[NodeArraySize];
 static Node *NodeEnd;
-
-struct Particle {
-    float sx, sy, charge;
-};
-
-static Particle ParticleArray[N_PARTICLE_MAX];
-
-static Particle* PartitionByX(Particle* first, Particle* last, float xcenter ) {
-    return std::partition(first, last, [xcenter](const Particle& p) {return p.sx<xcenter;});
-}
-
-static Particle* PartitionByY(Particle* first, Particle* last, float ycenter) {
-    return std::partition(first, last, [ycenter](const Particle& p) {return p.sy<ycenter; });
-}
 
 static Node* BuildQuadTreeRec( Particle* first, Particle* last ) {
     if( first==last )
@@ -56,11 +62,10 @@ static Node* BuildQuadTreeRec( Particle* first, Particle* last ) {
         n->sy = first->sy;
         n->charge = first->charge;
         n->r = 0;
-        for( int k=0; k<4; ++k )
-            n->child[k] = nullptr;
+        // Since r==0, do not need to set cx, cy, or child
         return n;
     };
-    // Find bounding square
+    // Find bounding box
     float xmin = first->sx, ymin = first->sy, xmax = first->sx, ymax = first->sy;
     for( auto i=first+1; i!=last; ++i ) {
         if( i->sx<xmin ) xmin = i->sx;
@@ -68,25 +73,28 @@ static Node* BuildQuadTreeRec( Particle* first, Particle* last ) {
         if( i->sy<ymin ) ymin = i->sy;
         else if(i->sy>ymax) ymax = i->sy;
     }
-    float xcenter = 0.5*(xmin+xmax);
-    float ycenter = 0.5*(ymin+ymax);
-    n->r = std::max(xmax-xcenter, ymax-ycenter);
+    float rx = 0.5f*(xmax-xmin);
+    float ry = 0.5f*(ymax-ymin);
+    float cx = xmin+rx;
+    float cy = ymin+ry;
     float sx = 0, sy = 0, charge = 0;
-    float glomDiameter = 0.000001f;      // FIXME - compute glomDiameter based on pixel size
-    if( ymax-ymin < glomDiameter && xmax-xmin < glomDiameter) {
-        // square is tiny - just glom everything
+    if( (cx==xmin || cx==xmax) && (cy==ymin || cy==ymax) ) {
+        // Further subdivision numerically impossible.  Treat as single point.
+        n->r = 0;
         for( auto i=first; i!=last; ++i ) {
-            sx += i->sx * charge;
-            sy += i->sy * charge;
+            sx += i->sx * i->charge;
+            sy += i->sy * i->charge;
             charge += i->charge;
         }
-        for(int k=0; k<4; ++k)
-            n->child[k] = nullptr;
+        // Since r==0, do not need to set cx, cy, or child
     } else {
         // Partition into quadrants
-        Particle* p2 = PartitionByY(first, last, ycenter);
-        Particle* p1 = PartitionByX(first, p2, xcenter);
-        Particle* p3 = PartitionByX(p2, last, xcenter);
+        n->r = std::max(rx,ry);
+        n->cx = cx;
+        n->cy = cy;
+        Particle* p2 = PartitionByY(first, last, cy);
+        Particle* p1 = PartitionByX(first, p2, cx);
+        Particle* p3 = PartitionByX(p2, last, cx);
         n->child[0] = BuildQuadTreeRec(first, p1);
         n->child[1] = BuildQuadTreeRec(p1, p2);
         n->child[2] = BuildQuadTreeRec(p2, p3);
@@ -105,8 +113,8 @@ static Node* BuildQuadTreeRec( Particle* first, Particle* last ) {
         n->sy = sy / charge;
     } else {
         // Avoid division by zero
-        n->sx = xcenter;
-        n->sy = ycenter;
+        n->sx = cx;
+        n->sy = cy;
     }
     return n;
 }
@@ -143,7 +151,7 @@ public:
 void QuadTreeSlice::fill(const Node* node, float x, float y, float r) {
     float threshhold = 0.25;
     // FIXME -avoid need for sqrt
-    if( node->r==0 || (node->r+r)/sqrt(Dist2(x, y, node->sx, node->sy)) < threshhold ) {
+    if( node->r==0 || (node->r+r)/sqrt(Dist2(x, y, node->cx, node->cy)) < threshhold ) {
         // Node is exact, or so far away that that its summary can be used.
         size_t n = nParticle++;
         sx[n] = node->sx;

@@ -99,7 +99,7 @@ bool GameInitialize() {
     InitializeClut();
 
 #if 0
-    // Test pattern
+    // Test pattern consisting of NxN grid of particles
     IsRunning = false;
     const int N=31;
     NParticle = N*N;
