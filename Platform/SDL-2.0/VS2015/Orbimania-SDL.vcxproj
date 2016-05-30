@@ -216,6 +216,7 @@
     <ClCompile Include="..\..\..\Source\Arrow.cpp" />
     <ClCompile Include="..\..\..\Source\Handle.cpp" />
     <ClCompile Include="..\..\..\Source\NimbleDraw.cpp" />
+    <ClCompile Include="..\..\..\Source\PotentialField.cpp" />
     <ClCompile Include="..\..\..\Source\Render.cpp" />
     <ClCompile Include="..\..\..\Source\TimeStep.cpp" />
     <ClCompile Include="..\..\..\Source\Universe.cpp" />

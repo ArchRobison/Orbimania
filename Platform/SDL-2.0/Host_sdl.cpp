@@ -28,7 +28,7 @@ limitations under the License.
 static SDL_PixelFormat* ScreenFormat;
 
 #ifdef __APPLE__
-// MacOS/SDL-2 have a texture synchronization bug on MacBook Airs running MacOS 10.11.1.  
+// MacOS/SDL-2 have a texture synchronization bug on MacBook Airs running MacOS 10.11.1.
 // The code works around the bug by manual double-buffering.
 const int N_TEXTURE = 2;
 #else
@@ -224,11 +224,11 @@ int main(int argc, char* argv[]){
     int w = displayMode.w;
     int h = displayMode.h;
 #if !EXCLUSIVE_MODE
-    w = 1024;
+    w = 768;
     h = 768;
 #endif
     SDL_Window* window = SDL_CreateWindow(
-        GameTitle(),                
+        GameTitle(),
         SDL_WINDOWPOS_UNDEFINED,    // initial x position
         SDL_WINDOWPOS_UNDEFINED,    // initial y position
         w,
@@ -256,12 +256,12 @@ int main(int argc, char* argv[]){
             if( !texture[textureIndex] ) {
                 fprintf(stderr,"No texture!\n");
                 abort();
-            } 
+            }
             if(SDL_LockTexture(texture[textureIndex], nullptr, &pixels, &pitch)) {
                 printf("Internal eror: SDL_LockTexture failed: %s\n", SDL_GetError());
                 break;
             }
-            double t0 = HostClockTime(); 
+            double t0 = HostClockTime();
             NimblePixMap screen(w, h, 8*sizeof(NimblePixel), pixels, pitch);
             if(Resize) {
                 GameResizeOrMove(screen);
@@ -270,7 +270,7 @@ int main(int argc, char* argv[]){
             GameUpdateDraw(screen, NimbleUpdate|NimbleDraw);
 #if 0
             extern void ThrottleWorkers(double,double);
-            ThrottleWorkers(t0,HostClockTime()); 
+            ThrottleWorkers(t0,HostClockTime());
 #endif
             SDL_UnlockTexture(texture[textureIndex]);
             SDL_RenderClear(renderer);
@@ -292,7 +292,7 @@ int main(int argc, char* argv[]){
         printf("GameInitialize() failed\n");
         return 1;
     }
-   
+
     SDL_DestroyWindow(window);
     return 0;
 }

@@ -1,15 +1,15 @@
-/* Copyright 1996-2016 Arch D. Robison 
+/* Copyright 1996-2016 Arch D. Robison
 
-   Licensed under the Apache License, Version 2.0 (the "License"); 
-   you may not use this file except in compliance with the License. 
-   You may obtain a copy of the License at 
-   
-       http://www.apache.org/licenses/LICENSE-2.0 
-       
-   Unless required by applicable law or agreed to in writing, software 
-   distributed under the License is distributed on an "AS IS" BASIS, 
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-   See the License for the specific language governing permissions and 
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
    limitations under the License.
  */
 
@@ -33,9 +33,14 @@
 
 static int WindowWidth, WindowHeight, PanelWidth;
 
+#define PROFILE_BUILD 0
+
+#if PROFILE_BUILD
+static int FrameCount = 0;
+#endif
 #if 0
 static const int ClickableSetMaxSize = 4;
-static Clickable* ClickableSet[ClickableSetMaxSize]; 
+static Clickable* ClickableSet[ClickableSetMaxSize];
 static Clickable** ClickableSetEnd = ClickableSet;
 
 void DrawClickable( Clickable& clickable, NimblePixMap& map, int x, int y ) {
@@ -46,15 +51,44 @@ void DrawClickable( Clickable& clickable, NimblePixMap& map, int x, int y ) {
 #endif
 
 static bool IsRunning = true;
+static bool UseFast = true;
 
-void GameUpdateDraw( NimblePixMap& map, NimbleRequest request ) { 
+void GameUpdateDraw( NimblePixMap& map, NimbleRequest request ) {
     if(request & NimbleUpdate ) {
         if( IsRunning )
             AdvanceUniverseOneTimeStep();
     }
     if(request & NimbleDraw) {
-        DrawPotentialField(map);
+        if(UseFast)
+            DrawPotentialFieldFast(map);
+        else
+            DrawPotentialFieldSlow(map);
+
         DrawMarkup(map);
+    }
+#if PROFILE_BUILD
+    if( ++FrameCount>=50 )
+        HostExit();
+#endif
+}
+
+static float Rand() {
+    return float(rand())*(1.0f/RAND_MAX);
+}
+
+static void AddRandomParticle() {
+    using namespace Universe;
+    size_t k = NParticle;
+    if(k<N_PARTICLE_MAX) {
+        Charge[k] =  Rand()<0.5 ? 1 : -1;
+        Mass[k] = 1;
+        Sx[k] = Rand()+0.25;
+        Sy[k] = Rand()+0.25;
+        float theta = Rand()*(2*3.1415926535897932384626);
+        float r = Rand();
+        Vx[k] =  r*sin(theta);
+        Vy[k] = r*cos(theta);
+        ++NParticle;
     }
 }
 
@@ -63,11 +97,37 @@ bool GameInitialize() {
 
     using namespace Universe;
     InitializeClut();
-    NParticle = 2;
 
+#if 0
+    // Test pattern
+    IsRunning = false;
+    const int N=31;
+    NParticle = N*N;
+    Assert(NParticle<=N_PARTICLE_MAX);
+    for( int k=0; k<NParticle; ++k ) {
+        int i = k%N;
+        int j = k/N;
+        Charge[k] = 0.05 * ((i^j)&1 ? 1 : -1);
+        Sx[k] = (j+1)*(1./(2+N));
+        Sy[k] = (i+1)*(1./(2+N));
+        Vx[k] = 0;
+        Vy[k] = 0;
+        Mass[k] = 1;
+    }
+#elif !PROFILE_BUILD
+    NParticle = 2;
     Charge[0] =  1; Mass[0] = 1; Sx[0] = 0.25; Sy[0] = 0.25; Vx[0] =  0.8; Vy[0] = -0.1;
     Charge[1] = -1; Mass[1] = 1; Sx[1] = 0.75; Sy[1] = 0.75; Vx[1] = -0.8; Vy[1] =  0.1;
-    
+#else
+    // For profiling
+    NParticle = 0;
+    for( size_t k=0; k<N_PARTICLE_MAX; ++k ) {
+        AddRandomParticle();
+    }
+    SetZoom(ZoomLevel-1, -0.5*WindowWidth, -0.5*WindowHeight);
+    ViewOffsetX -= 1;
+    ViewOffsetY -= 0.25;
+#endif
 #if 0
     srand(2);
 #else
@@ -90,10 +150,6 @@ const char* GameTitle() {
     ;
 }
 
-static float Rand() {
-    return float(rand())*(1.0f/RAND_MAX);
-}
-
 void GameKeyDown( int key ) {
     Assert( !('A'<=key && key<='Z') );  // Alphabetic key should be lower case.
     switch(key) {
@@ -113,17 +169,15 @@ void GameKeyDown( int key ) {
             SetZoom(0, WindowWidth/2, WindowHeight/2);
             break;
         case 'm': {
-            using namespace Universe;
-            size_t k = NParticle;
-            if( k<N_PARTICLE_MAX ) {
-                Charge[k] =  Rand()<0.5 ? 1 : -1;
-                Mass[k] = 1;
-                Sx[k] = Rand();
-                Sy[k] = Rand();
-                Vx[k] =  Rand() - 0.5; 
-                Vy[k] = Rand() - 0.5;
-                ++NParticle;
-            }
+            AddRandomParticle();
+            break;
+        }
+        case 'f': {
+            UseFast = true;
+            break;
+        }
+        case 'g': {
+            UseFast = false;
             break;
         }
 #if 0
@@ -131,7 +185,7 @@ void GameKeyDown( int key ) {
             VisibleDialog = NULL;
             break;
         case ' ':
-            if( CultureBeginX<=DuckX && DuckX<CultureEndX ) 
+            if( CultureBeginX<=DuckX && DuckX<CultureEndX )
                 VisibleDialog = &WarnAwayFromCultureDialog;
             else
                 // Fire airgun at Duck's feet, because firing airgun at surface generates wave that
@@ -169,7 +223,7 @@ static float MousePointX, MousePointY, MouseScalar;
 static int HandleTolerance = 10;    // FIXME - scale to screen size
 
 static void SelectHandle( int x, int y ) {
-    SelectedHandle = HandleBufFind(x,y,HandleTolerance,Handle::maskAll); 
+    SelectedHandle = HandleBufFind(x,y,HandleTolerance,Handle::maskAll);
     if( SelectedHandle.kind==Handle::null ) {
         Handle h = HandleBufFind(x,y,1000,Handle::maskTail);   // FIXME - avoid hardcoding constant
         if( h.kind!=Handle::null ) {
@@ -209,10 +263,10 @@ void GameMouseButtonDown( const NimblePoint& point, int k ) {
 #if 0
     switch(k) {
         case 0:
-            if( VisibleDialog ) 
+            if( VisibleDialog )
                 if( VisibleDialog->mouseDown(point) )
                     return;
-            for( Clickable** c=ClickableSetEnd; --c>=ClickableSet;  ) 
+            for( Clickable** c=ClickableSetEnd; --c>=ClickableSet;  )
                 if( (*c)->mouseDown(point) )
                     return;
             break;
@@ -243,15 +297,9 @@ void GameMouseButtonUp( const NimblePoint& point, int k ) {
                 break;
         }
     }
-    for( Clickable** c=ClickableSet; c!=ClickableSetEnd; ++c ) 
+    for( Clickable** c=ClickableSet; c!=ClickableSetEnd; ++c )
         (*c)->mouseUp(point);
 #endif
-}
-
-static inline float Dist2( float x0, float y0, float x1, float y1 ) {
-    float dx = x0-x1;
-    float dy = y0-y1;
-    return dx*dx + dy*dy;
 }
 
 void GameMouseMove( const NimblePoint& point ) {
@@ -305,7 +353,7 @@ void GameMouseMove( const NimblePoint& point ) {
         SelectHandle(x,y);
     }
 #if 0
-    if( VisibleDialog ) 
+    if( VisibleDialog )
         VisibleDialog->mouseMove(point);
     for( Clickable** c=ClickableSet; c!=ClickableSetEnd; ++c )
         (*c)->mouseMove(point);
