@@ -16,6 +16,8 @@ static NimblePixel UnselectedHandleColor( NimbleColor(128).pixel());
 static NimblePixel SelectedHandleColor( NimbleColor(255,0,255).pixel());
 static NimblePixel ArrowColor( NimbleColor(128).pixel());
 
+// Draw onto map a Handle of the specified kind and add the handle 
+// to the handle buffer so that it can be searched for later.
 static void DrawHandle( const NimblePixMap& map, float x, float y, float r, Handle::kindType kind, size_t k ) {
     NimblePixel color = SelectedHandle.match(kind,k) ? SelectedHandleColor : UnselectedHandleColor;
     if( r==0 ) {
@@ -47,12 +49,15 @@ void DrawMarkup( const NimblePixMap& map ) {
          x1[k] = x0[k] + (Vx[k] * tipScale);
          y1[k] = y0[k] + (Vy[k] * tipScale);
     }
+    // Draw mass circles
     for(size_t k=0; k<n; ++k) {
         DrawHandle(map, x0[k], y0[k], Mass[k]/ViewMassScale, Handle::circle, k);
     }
+    // Draw veloctiy arrows
     for( size_t k=0; k<n; ++k ) {
         DrawArrow(map, ArrowColor, x0[k], y0[k], x1[k], y1[k] );
     }
+    // Draw arrow tail and head handles
     for(size_t k=0; k<n; ++k) {
         if( SelectedHandle.match(Handle::tailHollow,k)) {
             DrawHandle(map, x0[k], y0[k], 5, Handle::tailHollow, k); 
