@@ -1,3 +1,7 @@
+#pragma once
+#ifndef Universe_H
+#define Universe_H
+
 #include <cstdio>
 #include "NimbleDraw.h"
 #include "Config.h"
@@ -21,11 +25,6 @@ extern Float DeltaT;
 
 }
 
-Universe::Float EvaluatePotential(float x, float y);
-void DrawPotentialFieldPrecise( const NimblePixMap& map );
-void DrawPotentialFieldBarnesHut(const NimblePixMap& map);
-void DrawPotentialFieldBilinear(const NimblePixMap& map);
-
 void DrawMarkup( const NimblePixMap& map );
 void AdvanceUniverseOneTimeStep(); // in TimeStep.cpp
 
@@ -42,3 +41,5 @@ static inline T Dist2(T x0, T y0, T x1, T y1) {
     T dy = y0-y1;
     return dx*dx + dy*dy;
 }
+
+#endif

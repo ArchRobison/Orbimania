@@ -1,14 +1,12 @@
-#include "Universe.h"
-#include "Clut.h"
-#include "View.h"
-#include "NimbleDraw.h"
 #include <cmath>
 #include <limits>
 #include <algorithm>
 #include "AssertLib.h"
-
-static const Universe::Float chargeScale = CLUT_SIZE/8;  // FIXME - have some kind of auto-scale?
-                                                         // Value returned is scaled so that [-1,1] maps onto the Clut.
+#include "Clut.h"
+#include "NimbleDraw.h"
+#include "PotentialField.h"
+#include "View.h"
+#include "Universe.h"
 
 // Particle parameters required for rendering.
 struct Particle {
@@ -184,16 +182,7 @@ void QuadTreeSlice::drawPatch(const NimblePixMap& map, int i0, int j0) {
                 p[j] += q/r;
             }
         }
-        using namespace Universe;
-        Float lowerLimit = 0;
-        Float upperLimit = CLUT_SIZE-1;
-        NimblePixel* out = (NimblePixel*)map.at(j0, i0+i);
-        for(int j=0; j<PATCH_SIZE; ++j) {
-            float v = p[j]*chargeScale + CLUT_SIZE/2 + 0.5;
-            if(v<=upperLimit); else v=upperLimit;
-            if(v>=lowerLimit); else v=lowerLimit;
-            out[j] = Clut[int(v)];
-        }
+        DrawPotentialRow((NimblePixel*)map.at(j0, i0+i), p, PATCH_SIZE);
     }
 #if 0
     // Mark upper left corner of patch

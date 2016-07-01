@@ -25,6 +25,7 @@
 #include "Host.h"
 #include "BuiltFromResource.h"
 #include "Handle.h"
+#include "PotentialField.h"
 #include "Universe.h"
 #include "Utility.h"
 #include "View.h"
@@ -164,10 +165,9 @@ void GameKeyDown( int key ) {
         case '0':
             SetZoom(0, WindowWidth/2, WindowHeight/2);
             break;
-        case 'm': {
+        case 'm': 
             AddRandomParticle();
             break;
-        }
         case 'f': 
             DrawPotentialField = DrawPotentialFieldBilinear;
             break;
