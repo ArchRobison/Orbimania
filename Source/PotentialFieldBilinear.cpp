@@ -8,11 +8,8 @@
 #include <algorithm>
 #include "AssertLib.h"
 
-static const Universe::Float chargeScale = CLUT_SIZE/8;  // FIXME - have some kind of auto-scale?
-                                                         // Value returned is scaled so that [-1,1] maps onto the Clut.
-
-static const int PATCH_SIZE = 32;
-static const float NEAR_RADIUS = 0.5;           // FIXME
+static const int PATCH_SIZE = 32;           // Use multiple of # of floats that fit in SIMD register
+static const float NEAR_RADIUS = 0.5;       // FIXME
 
 static float NearX[N_PARTICLE_MAX];
 static float NearY[N_PARTICLE_MAX];
@@ -24,9 +21,11 @@ void DrawPotentialFieldBilinear(const NimblePixMap& map) {
     int w = map.width();
     int h = map.height();
     size_t n = NParticle;
+    float cutoffRadius = 8*ViewScale*PATCH_SIZE;
     // FIXME - deal with pixels near boundary that do not lie in a complete patch.
-    for(int i0=0; i0+PATCH_SIZE<=h; i0+=PATCH_SIZE) {
-        for(int j0=0; j0+PATCH_SIZE<=w; j0+=PATCH_SIZE) {
+    for(int i0=0; i0<h; i0+=PATCH_SIZE) {
+        int iSize = std::min(PATCH_SIZE,h-i0);
+        for(int j0=0; j0<w; j0+=PATCH_SIZE) {
             float a00 = 0, a01 = 0, a10 = 0, a11 = 0;
             float y0 = ViewOffsetY + ViewScale*i0;
             float x0 = ViewOffsetX + ViewScale*j0;
@@ -38,7 +37,7 @@ void DrawPotentialFieldBilinear(const NimblePixMap& map) {
             for(size_t k=0; k<n; ++k) {
                 float sx = Sx[k];
                 float sy = Sy[k];
-                if( std::sqrt(Dist2(sx,sy,xm,ym))*fabs(Charge[k]) <= NEAR_RADIUS ) {
+                if( std::sqrt(Dist2(sx,sy,xm,ym)) <= cutoffRadius ) {
                     // Use particle exactly
                     NearX[nearN] = sx;
                     NearY[nearN] = sy;
@@ -46,7 +45,7 @@ void DrawPotentialFieldBilinear(const NimblePixMap& map) {
                     ++nearN;
                 } else {
                     // Use bilinear interpolation
-                    a00 += PotentialAt(k,x0, y0);
+                    a00 += PotentialAt(k, x0, y0);
                     a01 += PotentialAt(k, x0, y1);
                     a10 += PotentialAt(k, x1, y0);
                     a11 += PotentialAt(k, x1, y1);
@@ -57,7 +56,10 @@ void DrawPotentialFieldBilinear(const NimblePixMap& map) {
                 x[j] = ViewOffsetX + ViewScale*(j0+j);
             }
             // Work one row at a time to optimize cache usage
-            for(int i=0; i<PATCH_SIZE; ++i) {
+            // j-loops really only have to do jSize iterations, but do PATCH_SIZE anyway on theory
+            // that it avoids remainder loops.
+            int jSize = std::min(PATCH_SIZE, w-j0);
+            for(int i=0; i<iSize; ++i) {
                 // Set potential accumulator to bilinear interpolation values
                 float fy = i*(1.0f/PATCH_SIZE);
                 for(int j=0; j<PATCH_SIZE; ++j) {
@@ -69,14 +71,14 @@ void DrawPotentialFieldBilinear(const NimblePixMap& map) {
                 for(size_t k=0; k<nearN; ++k) {
                     float dy = NearY[k]-y;
                     float q = NearCharge[k];
-                    // Inner loop
+                    // Inner loop. 
                     for(int j=0; j<PATCH_SIZE; ++j) {
                         float dx = NearX[k]-x[j];
                         float r = std::sqrt(dx*dx+dy*dy);
                         p[j] += q/r;
                     }
                 }
-                DrawPotentialRow((NimblePixel*)map.at(j0, i0+i), p, PATCH_SIZE);
+                DrawPotentialRow((NimblePixel*)map.at(j0, i0+i), p, jSize);
             }
         }
     }

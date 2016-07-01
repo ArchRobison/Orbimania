@@ -147,6 +147,14 @@ const char* GameTitle() {
     ;
 }
 
+void ReverseDirection() {
+    using namespace Universe;
+    for( size_t k=0; k<NParticle; ++k ) {
+        Vx[k] *= -1;
+        Vy[k] *= -1;
+    }
+}
+
 void GameKeyDown( int key ) {
     Assert( !('A'<=key && key<='Z') );  // Alphabetic key should be lower case.
     switch(key) {
@@ -177,20 +185,12 @@ void GameKeyDown( int key ) {
         case 'h': 
             DrawPotentialField = DrawPotentialFieldBarnesHut;
             break;
+        case 'r':
+            ReverseDirection();
+            break;
 #if 0
         case HOST_KEY_RETURN:
             VisibleDialog = NULL;
-            break;
-        case ' ':
-            if( CultureBeginX<=DuckX && DuckX<CultureEndX )
-                VisibleDialog = &WarnAwayFromCultureDialog;
-            else
-                // Fire airgun at Duck's feet, because firing airgun at surface generates wave that
-                // mostly cancels itself.
-                AirgunFire( DuckX, 8 );
-            break;
-        case 'a':
-            IsAutoGainOn.toggleChecked();
             break;
         case 'f':
             ShowFrameRate = !ShowFrameRate;
@@ -203,12 +203,6 @@ void GameKeyDown( int key ) {
             break;
         case 'p':
             IsPaused.toggleChecked();
-            break;
-        case 'g':
-            ToggleShowGeology();
-            break;
-        case 'r':
-            ToggleShowReservoir();
             break;
 #endif
     }
