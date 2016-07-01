@@ -51,7 +51,7 @@ void DrawClickable( Clickable& clickable, NimblePixMap& map, int x, int y ) {
 #endif
 
 static bool IsRunning = true;
-static bool UseFast = true;
+static void (*DrawPotentialField)(const NimblePixMap& map) = DrawPotentialFieldBilinear;
 
 void GameUpdateDraw( NimblePixMap& map, NimbleRequest request ) {
     if(request & NimbleUpdate ) {
@@ -59,11 +59,7 @@ void GameUpdateDraw( NimblePixMap& map, NimbleRequest request ) {
             AdvanceUniverseOneTimeStep();
     }
     if(request & NimbleDraw) {
-        if(UseFast)
-            DrawPotentialFieldFast(map);
-        else
-            DrawPotentialFieldSlow(map);
-
+        DrawPotentialField(map);
         DrawMarkup(map);
     }
 #if PROFILE_BUILD
@@ -172,14 +168,15 @@ void GameKeyDown( int key ) {
             AddRandomParticle();
             break;
         }
-        case 'f': {
-            UseFast = true;
+        case 'f': 
+            DrawPotentialField = DrawPotentialFieldBilinear;
             break;
-        }
-        case 'g': {
-            UseFast = false;
+        case 'g': 
+            DrawPotentialField = DrawPotentialFieldPrecise;
             break;
-        }
+        case 'h': 
+            DrawPotentialField = DrawPotentialFieldBarnesHut;
+            break;
 #if 0
         case HOST_KEY_RETURN:
             VisibleDialog = NULL;

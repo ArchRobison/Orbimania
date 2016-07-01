@@ -22,8 +22,10 @@ extern Float DeltaT;
 }
 
 Universe::Float EvaluatePotential(float x, float y);
-void DrawPotentialFieldSlow( const NimblePixMap& map );
-void DrawPotentialFieldFast(const NimblePixMap& map);
+void DrawPotentialFieldPrecise( const NimblePixMap& map );
+void DrawPotentialFieldBarnesHut(const NimblePixMap& map);
+void DrawPotentialFieldBilinear(const NimblePixMap& map);
+
 void DrawMarkup( const NimblePixMap& map );
 void AdvanceUniverseOneTimeStep(); // in TimeStep.cpp
 
