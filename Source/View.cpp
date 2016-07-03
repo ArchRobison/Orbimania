@@ -35,3 +35,8 @@ void SetZoom(int level, int centerX, int centerY) {
     ViewVelocityScale = 4*ViewScale;
     ViewMassScale = ViewScale*(DefaultMassScale/DefaultViewScale);
 }
+
+void RecenterView(int centerX, int centerY) {
+    ViewOffsetX = -centerX*ViewScale;
+    ViewOffsetY = -centerY*ViewScale;
+}

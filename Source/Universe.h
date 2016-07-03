@@ -23,7 +23,10 @@ extern StateVar
 extern size_t NParticle;
 extern Float DeltaT;
 
-}
+void EraseParticle(size_t k);
+void Recenter();
+
+} // namespace Universe
 
 void DrawMarkup( const NimblePixMap& map );
 void AdvanceUniverseOneTimeStep(); // in TimeStep.cpp

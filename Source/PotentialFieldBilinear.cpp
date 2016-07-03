@@ -62,11 +62,13 @@ void DrawPotentialFieldBilinear(const NimblePixMap& map) {
             for(int i=0; i<iSize; ++i) {
                 // Set potential accumulator to bilinear interpolation values
                 float fy = i*(1.0f/PATCH_SIZE);
+                float b0 = a00*(1-fy) + a01*fy;
+                float b1 = ((a10*(1-fy) + a11*fy) - b0)*(1.0f/PATCH_SIZE);
                 for(int j=0; j<PATCH_SIZE; ++j) {
                     float fx = j*(1.0f/PATCH_SIZE);
-                    p[j] = a00*(1-fy)*(1-fx) + a01*fy*(1-fx) + a10*(1-fy)*fx + a11*fy*fx;
+                    p[j] = b0 + b1*j; 
                 }
-                // Loop over particles is middle loop to hide latency of summation.
+                // Do loop over particles as middle loop to hide latency of summation.
                 float y = ViewOffsetY + ViewScale*(i0+i);
                 for(size_t k=0; k<nearN; ++k) {
                     float dy = NearY[k]-y;

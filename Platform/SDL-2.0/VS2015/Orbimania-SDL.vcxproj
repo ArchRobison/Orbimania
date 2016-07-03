@@ -202,7 +202,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <AdditionalDependencies>sdl2_image.lib;sdl2main.lib;sdl2.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(TBB40_INSTALL_DIR)\lib\ia32\vc12;C:\lib\SDL2-2.0.3\lib\x64;C:\lib\SDL2_image-2.0.0\lib\x64</AdditionalLibraryDirectories>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <MinimumRequiredVersion>5.01</MinimumRequiredVersion>
     </Link>
   </ItemDefinitionGroup>
@@ -216,7 +216,9 @@
     <ClCompile Include="..\..\..\Source\Arrow.cpp" />
     <ClCompile Include="..\..\..\Source\Handle.cpp" />
     <ClCompile Include="..\..\..\Source\NimbleDraw.cpp" />
-    <ClCompile Include="..\..\..\Source\PotentialField.cpp" />
+    <ClCompile Include="..\..\..\Source\PotentialFieldBarnesHut.cpp" />
+    <ClCompile Include="..\..\..\Source\PotentialFieldBilinear.cpp" />
+    <ClCompile Include="..\..\..\Source\PotentialFieldPrecise.cpp" />
     <ClCompile Include="..\..\..\Source\Render.cpp" />
     <ClCompile Include="..\..\..\Source\TimeStep.cpp" />
     <ClCompile Include="..\..\..\Source\Universe.cpp" />
@@ -233,6 +235,7 @@
     <ClInclude Include="..\..\..\Source\Handle.h" />
     <ClInclude Include="..\..\..\Source\Host.h" />
     <ClInclude Include="..\..\..\Source\NimbleDraw.h" />
+    <ClInclude Include="..\..\..\Source\PotentialField.h" />
     <ClInclude Include="..\..\..\Source\StartupList.h" />
     <ClInclude Include="..\..\..\Source\Universe.h" />
     <ClInclude Include="..\..\..\Source\Utility.h" />

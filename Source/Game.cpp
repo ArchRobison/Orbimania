@@ -147,11 +147,23 @@ const char* GameTitle() {
     ;
 }
 
-void ReverseDirection() {
+static void ReverseDirection() {
     using namespace Universe;
     for( size_t k=0; k<NParticle; ++k ) {
         Vx[k] *= -1;
         Vy[k] *= -1;
+    }
+}
+
+void DeleteSelectedHandle() {
+    switch( SelectedHandle.kind ) {
+        case Handle::tailFull: {
+            size_t k = SelectedHandle.index;
+            SelectedHandle = Handle();
+            Universe::EraseParticle(k);
+            UpdateHandlesAfterErasure(k);
+            break;
+        }
     }
 }
 
@@ -173,6 +185,10 @@ void GameKeyDown( int key ) {
         case '0':
             SetZoom(0, WindowWidth/2, WindowHeight/2);
             break;
+        case '9':
+            Universe::Recenter();
+            RecenterView(WindowWidth/2, WindowHeight/2);
+            break;
         case 'm': 
             AddRandomParticle();
             break;
@@ -187,6 +203,9 @@ void GameKeyDown( int key ) {
             break;
         case 'r':
             ReverseDirection();
+            break;
+        case HOST_KEY_DELETE:
+            DeleteSelectedHandle();
             break;
 #if 0
         case HOST_KEY_RETURN:
@@ -205,41 +224,13 @@ void GameKeyDown( int key ) {
             IsPaused.toggleChecked();
             break;
 #endif
+        default:
+            break;
     }
 }
 
 static bool MouseIsDown;
 static float MousePointX, MousePointY, MouseScalar;
-
-static int HandleTolerance = 10;    // FIXME - scale to screen size
-
-// Set SelectedHandle to handle selected by cursor point (x,y)
-static void SelectHandle( int x, int y ) {
-    // Check if user is trying to select handle directly by pointing to it.
-    SelectedHandle = HandleBufFind(x, y, HandleTolerance, Handle::maskAll);
-    switch(SelectedHandle.kind) {
-        case Handle::null: {
-            // No handle is close.  But maybe user is trying to change charge strength of closest charge.
-            Handle h = HandleBufFind(x, y, 1000, Handle::maskTail);   // FIXME - avoid hardcoding constant
-            if(h.kind!=Handle::null) {
-                float sx = ViewScale*x + ViewOffsetX;
-                float sy = ViewScale*y + ViewOffsetY;
-                float p = std::fabs(EvaluatePotential(sx, sy));
-                if(p>=0.5f) {
-                    h.kind = Handle::tailHollow;
-                    SelectedHandle = h;
-                } else {
-                    SelectedHandle = Handle();
-                }
-            }
-            break;
-        }
-        case Handle::tailHollow:
-            // Handle was not close before now, but now is close.
-            SelectedHandle.kind = Handle::tailFull;
-            break;
-    }
-}
 
 void GameMouseButtonDown( const NimblePoint& point, int k ) {
     using namespace Universe;

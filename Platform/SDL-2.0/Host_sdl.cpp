@@ -143,6 +143,7 @@ static void InitializeKeyTranslationTables() {
     Associate(SDL_SCANCODE_RIGHT, HOST_KEY_RIGHT);
     Associate(SDL_SCANCODE_UP, HOST_KEY_UP);
     Associate(SDL_SCANCODE_DOWN, HOST_KEY_DOWN);
+    Associate(SDL_SCANCODE_DELETE, HOST_KEY_DELETE);
 }
 
 static void PollEvents() {

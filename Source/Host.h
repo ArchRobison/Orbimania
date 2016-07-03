@@ -1,4 +1,4 @@
-/* Copyright 1996-2015 Arch D. Robison 
+/* Copyright 1996-2016 Arch D. Robison 
 
    Licensed under the Apache License, Version 2.0 (the "License"); 
    you may not use this file except in compliance with the License. 
@@ -39,6 +39,7 @@ enum {
     HOST_KEY_RIGHT,
     HOST_KEY_UP, 
     HOST_KEY_DOWN,
+    HOST_KEY_DELETE,
     HOST_KEY_LAST           // Value for declaring arrays
 };
 

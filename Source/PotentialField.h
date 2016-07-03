@@ -17,6 +17,7 @@ limitations under the License.
 #define PotentialField_H
 
 #include <cmath>
+#include "Clut.h"
 #include "Universe.h"
 #include "NimbleDraw.h"
 

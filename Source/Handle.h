@@ -16,7 +16,9 @@ struct Handle {
     static const unsigned maskTail = 1<<tailFull | 1<<tailHollow;
 
     bool isNull() const {return kind==null;}
+    // Kind of handle
     kindType kind;
+    // Index into Universe::StateVar
     size_t index;
     Handle() : kind(null), index(-1) {}
     Handle( Handle::kindType kind_, size_t index_ ) : index(index_), kind(kind_) {}
@@ -25,7 +27,8 @@ struct Handle {
 
 void HandleBufClear();
 void HandleBufAdd( float x, float y, float r, const Handle& h );
-Handle HandleBufFind( float x, float y, float maxDist, unsigned mask);
+void SelectHandle(int x, int y);
+void UpdateHandlesAfterErasure(size_t k);
 extern Handle SelectedHandle;
 
 #endif /* Handle_H */

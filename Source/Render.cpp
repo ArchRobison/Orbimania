@@ -11,7 +11,6 @@ void DrawArrow( const NimblePixMap& map, NimblePixel color, float x0, float y0, 
 bool DrawDot( const NimblePixMap& map, NimblePixel color, float x0, float y0, float r );
 bool DrawCircle( const NimblePixMap& map, NimblePixel color, float x0, float y0, float r, bool dashed);
 
-Handle SelectedHandle;
 static NimblePixel UnselectedHandleColor( NimbleColor(128).pixel());
 static NimblePixel SelectedHandleColor( NimbleColor(255,0,255).pixel());
 static NimblePixel ArrowColor( NimbleColor(128).pixel());
