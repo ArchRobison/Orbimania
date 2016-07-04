@@ -1,6 +1,8 @@
 #ifndef Handle_H
 #define Handle_H
 
+#include <cstddef>
+
 /*
 A Handle is something the cursor can grab.  
 */
@@ -19,16 +21,16 @@ struct Handle {
     // Kind of handle
     kindType kind;
     // Index into Universe::StateVar
-    size_t index;
+    std::size_t index;
     Handle() : kind(null), index(-1) {}
-    Handle( Handle::kindType kind_, size_t index_ ) : index(index_), kind(kind_) {}
-    bool match( Handle::kindType kind_, size_t index_ ) const {return kind==kind_ && index==index_;}
+    Handle( Handle::kindType kind_, std::size_t index_ ) : index(index_), kind(kind_) {}
+    bool match( Handle::kindType kind_, std::size_t index_ ) const {return kind==kind_ && index==index_;}
 };
 
 void HandleBufClear();
 void HandleBufAdd( float x, float y, float r, const Handle& h );
 void SelectHandle(int x, int y);
-void UpdateHandlesAfterErasure(size_t k);
+void UpdateHandlesAfterErasure(std::size_t k);
 extern Handle SelectedHandle;
 
 #endif /* Handle_H */

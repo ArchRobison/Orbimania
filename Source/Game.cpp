@@ -164,6 +164,8 @@ void DeleteSelectedHandle() {
             UpdateHandlesAfterErasure(k);
             break;
         }
+        default:
+            break;
     }
 }
 

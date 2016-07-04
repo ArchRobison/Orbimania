@@ -21,6 +21,8 @@
 #ifndef Config_H
 #define Config_H
 
+#include <cstddef>
+
 //! Maximum supported display width
 /** Must be multiple of 4.
     Seem to get slightly better performance if it is not a multiple of 16 */
@@ -39,6 +41,6 @@ const int CLUT_LG_SIZE = 10;
 const int CLUT_SIZE = 1<<CLUT_LG_SIZE;
 
 //! Maximum number of particles
-const size_t N_PARTICLE_MAX = 1000;
+const std::size_t N_PARTICLE_MAX = 1000;
 
 #endif /*Config_H*/
