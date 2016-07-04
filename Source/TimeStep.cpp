@@ -22,12 +22,13 @@ inline float Dist( size_t i, size_t j, StateVar sx, StateVar sy ) {
 }
 
 static void ComputeForce() {
-    for( size_t i=0; i<NParticle; ++i ) {
+    size_t n = NParticle;
+    for( size_t i=0; i<n; ++i ) {
         Fx[i] = 0;
         Fy[i] = 0;
     }
-    for( size_t i=0; i<NParticle; ++i ) {
-        for( size_t j=i+1; j<NParticle; ++j ) {
+    for( size_t i=0; i<n-1; ++i ) {
+        for( size_t j=i+1; j<n; ++j ) {
             float d = Dist(i,j,Sx,Sy);
             float d_ = Dist(i,j,Sx_,Sy_);
             // Formula for f is Greenspan term with phi = 1/d and simplifed via (1/d_ - 1/d)/(d_ - d) = -1/(d_*d)
@@ -43,15 +44,15 @@ static void ComputeForce() {
 }
 
 static float UpdateNextPosition() {
+    size_t n = NParticle;
     float error = 0;
     float h = 0.5f*DeltaT;              // h = half of deltaT
-    for( size_t i=0; i<NParticle; i++ ) {
+    for( size_t i=0; i<n; i++ ) {
+        // Compute position using average velocity
         float sx_ = Sx[i] + h*(Vx[i] + Vx_[i]);
         float sy_ = Sy[i] + h*(Vy[i] + Vy_[i]);
         // Compare with previously computed future position
-        float dx = sx_ - Sx_[i];
-        float dy = sy_ - Sy_[i];
-        error += dx*dx + dy*dy;
+        error += Dist2(sx_, sy_, Sx_[i], Sy_[i]);
         Sx_[i] = sx_;
         Sy_[i] = sy_;
     }
@@ -59,15 +60,14 @@ static float UpdateNextPosition() {
 }
 
 static float UpdateNextVelocity() {
+    size_t n = NParticle;
     float error = 0;
     // Compute velocities
-    for( size_t i=0; i<NParticle; i++ ) {
+    for( size_t i=0; i<n; i++ ) {
     	// Compute linear velocity from force.
         float vx_ = Vx[i] + (DeltaT/Mass[i])*Fx[i]; 
         float vy_ = Vy[i] + (DeltaT/Mass[i])*Fy[i];
-        float dx = vx_ - Vx_[i];
-        float dy = vy_ - Vy_[i]; 
-        error += dx*dx + dy*dy;
+        error += Dist2(vx_, vy_, Vx_[i], Vy_[i]); 
         Vx_[i] = vx_;
         Vy_[i] = vy_;
     }
@@ -75,25 +75,29 @@ static float UpdateNextVelocity() {
 }
 
 void AdvanceUniverseOneTimeStep() {
+    size_t n = NParticle;
     // Set future position assuming constant velocity.
-    for( size_t i=0; i<NParticle; i++ ) {
+    for( size_t i=0; i<n; i++ ) {
         Vx_[i] = Vx[i];
         Vy_[i] = Vy[i];
     }
-    // Do 16 iterations of fixed-point root finder.
-    float dummy0 = 0;
+    // Do up to 16 iterations of fixed-point root finder.
+    float olderr = 0;
     for( int k=0; k<16; k++ ) {
-	    float ep = UpdateNextPosition();
+	    float errp = UpdateNextPosition();
 	    ComputeForce();
-	    float ev = UpdateNextVelocity();
-	    float dummy1 = ep+ev;
-	    if( dummy0>=1.0 && dummy1>dummy0 ) {
+	    float errv = UpdateNextVelocity();
+        // Adding square-errors with different dimensional units is questionable
+	    float err = errp+errv;
+        if( err==0 )
+            break;
+ 	    if( k>0 && err>olderr ) {
 	        char * ouch = "ouch";
 	    }
-	    dummy0 = dummy1;
+        olderr = err;
 	}
     // Advance one time step.
-    for( size_t i=0; i<NParticle; i++ ) {
+    for( size_t i=0; i<n; i++ ) {
         Sx[i] = Sx_[i]; 
         Sy[i] = Sy_[i]; 
         Vx[i] = Vx_[i]; 
