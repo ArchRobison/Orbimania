@@ -2,9 +2,9 @@
 #include "AssertLib.h"
 #include <cmath>
 
-static float DefaultViewScale = 1.0/768;
-static float DefaultMassScale = 1.0/100;
-static float DefaultChargeScale = 1.0/100;
+static float DefaultViewScale = 1.0f/768;
+static float DefaultMassScale = 1.0f/100;
+static float DefaultChargeScale = 1.0f/100;
 
 // x in universe = ViewScale*(pixel for x) + ViewOffsetX
 float ViewScale = DefaultViewScale; // FIXME - set per screen size

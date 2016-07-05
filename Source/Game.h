@@ -36,14 +36,8 @@ void GameKeyDown( int key );
 /** Defined by client. */
 const char* GameTitle();
 
-//! Called when mouse moves to new coordinate
-void GameMouseMove( const NimblePoint& point );
-
-//! Kth mouse button was pressed
-void GameMouseButtonDown( const NimblePoint& point, int k );
-
-//! Kth mouse buttom was released
-void GameMouseButtonUp( const NimblePoint& point, int k );
+//! Called when mouse changes state
+void GameMouse(MouseEvent e, const NimblePoint& point);
 
 //! Update and/or draw game state, depending on flags set in request.
 void GameUpdateDraw( NimblePixMap& map, NimbleRequest request );    

@@ -89,8 +89,11 @@ public:
     //! True if rectangle contains vertical coordinate y. 
     bool containsY( int y ) const {return unsigned(y-top) < unsigned(height());}
 
+    //! True if rectangle contains point (x,y).
+    bool contains( int x, int y ) const {return containsX(x) && containsY(y);}
+
     //! True if rectangle contains point p.
-    bool contains( const NimblePoint& p ) const {return containsX(p.x) && containsY(p.y);}
+    bool contains( const NimblePoint& p ) const {return contains(p.x, p.y);}
 
     //! True if map completely contains rectangle rect.
     bool contains( const NimbleRect& rect ) const {
@@ -278,5 +281,13 @@ inline NimbleRequest operator&( NimbleRequest x, NimbleRequest y ) {
 inline NimbleRequest operator-( NimbleRequest x, NimbleRequest y ) {
     return NimbleRequest(x&~y);
 }
+
+//! Kinds of mouse events
+enum class MouseEvent {
+    move=0,                // Mouse moved with button up
+    down,                  // Button pressed
+    up,                    // Button released
+    drag                   // Mouse moved with button down
+};
 
 #endif /*NimbleDraw_H*/

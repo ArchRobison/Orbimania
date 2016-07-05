@@ -232,125 +232,79 @@ void GameKeyDown( int key ) {
     }
 }
 
-static bool MouseIsDown;
 static float MousePointX, MousePointY, MouseScalar;
 
-void GameMouseButtonDown( const NimblePoint& point, int k ) {
-    using namespace Universe;
-    MouseIsDown = true;
-    float x = point.x;
-    float y = point.y;
-    MousePointX = ViewScale*x + ViewOffsetX;
-    MousePointY = ViewScale*y + ViewOffsetY;
-    MouseScalar = 0;
-    SelectHandle(x, y);
-    switch(SelectedHandle.kind) {
-        case Handle::circle: {
-            MouseScalar = Mass[SelectedHandle.index];
-            break;
-        }
-        case Handle::tailHollow:
-            MouseScalar = Charge[SelectedHandle.index];
-            break;
-        default:
-            break;
-    }
-#if 0
-    switch(k) {
-        case 0:
-            if( VisibleDialog )
-                if( VisibleDialog->mouseDown(point) )
-                    return;
-            for( Clickable** c=ClickableSetEnd; --c>=ClickableSet;  )
-                if( (*c)->mouseDown(point) )
-                    return;
-            break;
-    }
-#endif
-}
-
-void GameMouseButtonUp( const NimblePoint& point, int k ) {
-    MouseIsDown = false;
-#if 0
-    if( VisibleDialog ) {
-        switch( VisibleDialog->mouseUp(point) ) {
-            case Dialog::update:
-                if( VisibleDialog==&TheGeologyDialog )
-                    CreateNewArea(/*recycle=*/true);
-                else if( VisibleDialog==&TheShotDialog )
-#if 0
-                    // Show example of shot
-                    GameKeyDown(' ');
-#else
-                    (void)0;
-#endif
-                break;
-            case Dialog::hide:
-                VisibleDialog = NULL;
-                break;
-            default:
-                break;
-        }
-    }
-    for( Clickable** c=ClickableSet; c!=ClickableSetEnd; ++c )
-        (*c)->mouseUp(point);
-#endif
-}
-
-void GameMouseMove( const NimblePoint& point ) {
+void GameMouse( MouseEvent e, const NimblePoint& point ) {
     using namespace Universe;
     float x = point.x;
     float y = point.y;
-    if( MouseIsDown ) {
-        switch(SelectedHandle.kind) {
-            case Handle::null: {
-                ViewOffsetX = MousePointX - ViewScale*point.x;
-                ViewOffsetY = MousePointY - ViewScale*point.y;
-                break;
-            }
-            case Handle::tailFull: {
-                size_t k = SelectedHandle.index;
-                Sx[k] = ViewScale*x + ViewOffsetX;
-                Sy[k] = ViewScale*y + ViewOffsetY;
-                break;
-            }
-            case Handle::head: {
-                size_t k = SelectedHandle.index;
-                float tailX = (Sx[k] - ViewOffsetX)/ViewScale;
-                float tailY = (Sy[k] - ViewOffsetY)/ViewScale;
-                Vx[k] = ViewVelocityScale * (x-tailX);
-                Vy[k] = ViewVelocityScale * (y-tailY);
-                break;
-            }
-            case Handle::circle:
-            case Handle::tailHollow: {
-                size_t k = SelectedHandle.index;
-                // Center of object in universe
-                float cx = Sx[k];
-                float cy = Sy[k];
-                // Original mouse positon in universe
-                float qx = MousePointX;
-                float qy = MousePointY;
-                // Current mouse position in universe
-                float px = ViewScale*x + ViewOffsetX;
-                float py = ViewScale*y + ViewOffsetY;
-                float dot = (px-cx)*(MousePointX-cx) + (py-cy)*(MousePointY-cy);
-                float ratio = std::sqrt(Dist2(px,py,cx,cy)/Dist2(qx,qy,cx,cy)) * (dot>=0 ? 1 : -1);
-                if( SelectedHandle.kind==Handle::circle ) {
-                    Mass[k] = ratio*MouseScalar;
-                } else {
-                    Charge[k] = ratio*MouseScalar;
+    switch( e ) {
+        case MouseEvent::down:
+            MousePointX = ViewScale*x + ViewOffsetX;
+            MousePointY = ViewScale*y + ViewOffsetY;
+            MouseScalar = 0;
+            SelectHandle(x, y);
+            switch(SelectedHandle.kind) {
+                case Handle::circle: {
+                    MouseScalar = Mass[SelectedHandle.index];
+                    break;
                 }
-                break;
+                case Handle::tailHollow:
+                    MouseScalar = Charge[SelectedHandle.index];
+                    break;
+                default:
+                    break;
             }
-        }
-    } else {
-        SelectHandle(x,y);
+            break;
+        case MouseEvent::up:
+            break;
+        case MouseEvent::move:
+            SelectHandle(x, y);
+            break;
+        case MouseEvent::drag:
+            switch(SelectedHandle.kind) {
+                case Handle::null: {
+                    ViewOffsetX = MousePointX - ViewScale*point.x;
+                    ViewOffsetY = MousePointY - ViewScale*point.y;
+                    break;
+                }
+                case Handle::tailFull: {
+                    size_t k = SelectedHandle.index;
+                    Sx[k] = ViewScale*x + ViewOffsetX;
+                    Sy[k] = ViewScale*y + ViewOffsetY;
+                    break;
+                }
+                case Handle::head: {
+                    size_t k = SelectedHandle.index;
+                    float tailX = (Sx[k] - ViewOffsetX)/ViewScale;
+                    float tailY = (Sy[k] - ViewOffsetY)/ViewScale;
+                    Vx[k] = ViewVelocityScale * (x-tailX);
+                    Vy[k] = ViewVelocityScale * (y-tailY);
+                    break;
+                }
+                case Handle::circle:
+                case Handle::tailHollow: {
+                    size_t k = SelectedHandle.index;
+                    // Center of object in universe
+                    float cx = Sx[k];
+                    float cy = Sy[k];
+                    // Original mouse positon in universe
+                    float qx = MousePointX;
+                    float qy = MousePointY;
+                    // Current mouse position in universe
+                    float px = ViewScale*x + ViewOffsetX;
+                    float py = ViewScale*y + ViewOffsetY;
+                    float dot = (px-cx)*(MousePointX-cx) + (py-cy)*(MousePointY-cy);
+                    float ratio = std::sqrt(Dist2(px, py, cx, cy)/Dist2(qx, qy, cx, cy)) * (dot>=0 ? 1 : -1);
+                    if(SelectedHandle.kind==Handle::circle) {
+                        Mass[k] = ratio*MouseScalar;
+                    } else {
+                        Charge[k] = ratio*MouseScalar;
+                    }
+                    break;
+                }
+            }
+            break;
     }
-#if 0
-    if( VisibleDialog )
-        VisibleDialog->mouseMove(point);
-    for( Clickable** c=ClickableSet; c!=ClickableSetEnd; ++c )
-        (*c)->mouseMove(point);
-#endif
 }
+
