@@ -1,4 +1,4 @@
-/* Copyright 1996-2015 Arch D. Robison 
+/* Copyright 1996-2016 Arch D. Robison 
 
    Licensed under the Apache License, Version 2.0 (the "License"); 
    you may not use this file except in compliance with the License. 
@@ -14,7 +14,7 @@
  */
 
 /******************************************************************************
- Graphics layer for Seismic Duck
+ Graphics layer for Orbimania
 *******************************************************************************/
 
 #include "AssertLib.h"

@@ -23,6 +23,7 @@
 #include "NimbleDraw.h"
 #include "Game.h"
 #include "Host.h"
+#include "Menu.h"
 #include "BuiltFromResource.h"
 #include "Handle.h"
 #include "PotentialField.h"
@@ -130,7 +131,7 @@ bool GameInitialize() {
 #else
     srand( unsigned( fmod( HostClockTime()*1E3, 4*double(1<<30))));
 #endif
-
+    InitMenu();
     return true;
 }
 

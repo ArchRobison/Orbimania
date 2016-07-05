@@ -17,6 +17,12 @@
  OS specific services on the host that are called from OS-independent game code.
 *******************************************************************************/
 
+// Types defined in NimbleDraw.h
+class NimbleColor;
+class NimblePixMap;
+class NimblePoint;
+class NimbleRect;
+
 //! Return current absolute time in seconds.
 /** Only the difference between two calls are meaningful, because the 
     definition of 0 is platform dependent. */
@@ -62,3 +68,21 @@ class BuiltFromResourcePixMap;
     Call item.buildFrom(map) */
 void HostLoadResource( BuiltFromResourcePixMap& item );
 
+// Note: text argumentsa are assummed to be UTF8
+class HostFont {
+    HostFont(const HostFont&) = delete;
+    void operator=(const HostFont&) = delete;
+    // void* to hide underlying OS service
+    void* myFont;
+public:
+    HostFont() : myFont(nullptr) {}
+    void open(const char* filename, int ptsize);
+    void close();
+    bool isOpen() const {return myFont!=nullptr;}
+    // Return nominal height of font
+    int height() const;
+    // Return width and height of a bounding box for the text.
+    NimblePoint size( const char* text ) const;
+    // Draw text and return bounding box for the text.
+    NimbleRect draw(NimblePixMap& map, int x, int y, const char* text, const NimbleColor& color) const;
+};

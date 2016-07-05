@@ -112,7 +112,8 @@ public:
 enum NimblePixel: unsigned {};
 
 //! A device-independent representation of a color
-struct NimbleColor {
+class NimbleColor {
+public:
     //! Type of a component.  Guaranteed to be an integral type.
     typedef byte component_t;       
     //! Full intensity for a component
@@ -131,15 +132,20 @@ struct NimbleColor {
     //! Convert to pixel.
     NimblePixel pixel() const;
     //! Get alpha component from a pixel
-    static component_t alphaOf( NimblePixel p ) {return p>>24;}
+    static component_t alphaOf( NimblePixel p ) {return p>>alphaShift;}
+    //! Bit shifts for extracting components from a pixel
+    static const unsigned blueShift = 0;
+    static const unsigned greenShift = 8;
+    static const unsigned redShift = 16;
+    static const unsigned alphaShift = 24;
 };
 
 inline NimbleColor::NimbleColor( NimblePixel p ) {
     Assert( sizeof(NimblePixel)==4 );
-    red = p>>16 & 0xFF;
-    green = p>>8 & 0xFF;
-    blue = p & 0xFF;
-    alpha = p>>24 & 0xFF;
+    red = p>>redShift & 0xFF;
+    green = p>>greenShift & 0xFF;
+    blue = p>>blueShift & 0xFF;
+    alpha = p>>alphaShift & 0xFF;
 }
 
 inline void NimbleColor::mix( const NimbleColor& other, float f ) {
@@ -247,8 +253,8 @@ inline void* NimblePixMap::at( int x, int y ) const {
 
 //! NimblePixMap that owns its buffer.
 class NimblePixMapWithOwnership: public NimblePixMap {
-    void operator=( const NimblePixMapWithOwnership& ); 
-    NimblePixMapWithOwnership( const NimblePixMapWithOwnership& ); 
+    void operator=( const NimblePixMapWithOwnership& ) = delete; 
+    NimblePixMapWithOwnership( const NimblePixMapWithOwnership& ) = delete; 
 public:
     NimblePixMapWithOwnership() {}
     void deepCopy( const NimblePixMap& src );
