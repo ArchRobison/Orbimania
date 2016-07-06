@@ -52,6 +52,23 @@ void DrawClickable( Clickable& clickable, NimblePixMap& map, int x, int y ) {
 }
 #endif
 
+static struct MenuItemNewType: MenuItem {
+    MenuItemNewType() : MenuItem("New") {}
+    void onSelect() override {}
+} MenuItemNew;
+
+static struct MenuItemOpenType : MenuItem {
+    MenuItemOpenType() : MenuItem("Open") {}
+    void onSelect() override {}
+} MenuItemOpen;
+
+static struct MenuItemSaveType : MenuItem {
+    MenuItemSaveType() : MenuItem("Save") {}
+    void onSelect() override {}
+} MenuItemSave;
+
+static Menu FileMenu("File", {&MenuItemNew, &MenuItemOpen, &MenuItemSave});
+
 static bool IsRunning = true;
 static void (*DrawPotentialField)(const NimblePixMap& map) = DrawPotentialFieldBilinear;
 
@@ -63,6 +80,7 @@ void GameUpdateDraw( NimblePixMap& map, NimbleRequest request ) {
     if(request & NimbleDraw) {
         DrawPotentialField(map);
         DrawMarkup(map);
+        FileMenu.draw(map,0,0);
     }
 #if PROFILE_BUILD
     if( ++FrameCount>=50 )
@@ -238,6 +256,9 @@ void GameMouse( MouseEvent e, const NimblePoint& point ) {
     using namespace Universe;
     float x = point.x;
     float y = point.y;
+    if( FileMenu.trackMouse(e, x, y ) ) {
+        return;
+    }
     switch( e ) {
         case MouseEvent::down:
             MousePointX = ViewScale*x + ViewOffsetX;

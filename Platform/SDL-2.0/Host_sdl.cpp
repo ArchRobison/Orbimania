@@ -13,8 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Interfaces that isolate application from host dependencies.
+
 #include "SDL.h"
 #include "SDL_image.h"
+#include "SDL_ttf.h"
 #include "../../Source/Host.h"
 #include "../../Source/Game.h"
 #include "../../Source/BuiltFromResource.h"
@@ -23,6 +26,7 @@ limitations under the License.
 #include <string>
 #ifdef _WIN32
 #include <direct.h>
+#define getcwd _getcwd
 #endif
 
 static SDL_PixelFormat* ScreenFormat;
@@ -44,18 +48,26 @@ extern "C" FILE * __cdecl __iob_func(void) {
 }
 #endif
 
-static void ReportResourceError( const char* routine, const char* resourceName, const char* error ) {
-    std::printf( "Internal error: %s failed %s: %s\n", routine, resourceName, error );
+static void ReportResourceError( const char* routine, const char* path, const char* error ) {
+    char* cwd = getcwd(nullptr, 0);
+    std::printf("Current working directory = %s\n", cwd);
+    std::free(cwd);
+    std::fprintf( stderr, "Internal error: %s failed %s: %s\n", routine, path, error );
+    Assert(false);
     HostExit();
 }
 
-void HostLoadResource(BuiltFromResourcePixMap& item) {
+static std::string ResourceFilePath(const char* resourceName, const char* extension) {
 #if defined(HOST_RESOURCE_PATH)
     std::string path(HOST_RESOURCE_PATH);
 #else
     std::string path("../../../Resource");
 #endif
-    path = path + "/" + item.resourceName() + ".png";
+    return path + "/" + resourceName + "." + extension;
+}
+
+void HostLoadResource(BuiltFromResourcePixMap& item) {
+    std::string path = ResourceFilePath(item.resourceName(), "png");
     if( SDL_Surface* raw = IMG_Load(path.c_str()) ) {
         if( SDL_Surface* image = SDL_ConvertSurface(raw, ScreenFormat, 0) ) {
             SDL_FreeSurface(raw);
@@ -71,13 +83,6 @@ void HostLoadResource(BuiltFromResourcePixMap& item) {
             ReportResourceError("SDL_ConvertSurface", item.resourceName(), SDL_GetError());
         }
     } else {
-#ifdef _WIN32
-        char* cwd = _getcwd(nullptr,0);
-#else
-        char* cwd = getcwd(nullptr,0);
-#endif /*__APPLE__*/
-        std::printf("cwd = %s\n",cwd);
-        std::free(cwd);
         ReportResourceError("IMG_Load", path.c_str(), IMG_GetError());
     }
 }
@@ -148,6 +153,7 @@ static void InitializeKeyTranslationTables() {
 
 static void PollEvents() {
     SDL_Event event;
+    static MouseEvent mouseMoveEvent;
     while(SDL_PollEvent(&event)) {
         switch(event.type){
             /* Keyboard event */
@@ -159,13 +165,15 @@ static void PollEvents() {
 
                 /* SDL_QUIT event (window close) */
             case SDL_MOUSEMOTION:
-                GameMouseMove(NimblePoint(event.motion.x, event.motion.y));
+                GameMouse(mouseMoveEvent, NimblePoint(event.motion.x, event.motion.y));
                 break;
             case SDL_MOUSEBUTTONDOWN:
-                GameMouseButtonDown(NimblePoint(event.button.x, event.button.y), 0);  // FIXME set button correctly
+                mouseMoveEvent = MouseEvent::drag;
+                GameMouse(MouseEvent::down, NimblePoint(event.button.x, event.button.y));  
                 break;
             case SDL_MOUSEBUTTONUP:
-                GameMouseButtonUp(NimblePoint(event.button.x, event.button.y), 0);  // FIXME set button correctly
+                mouseMoveEvent = MouseEvent::move;
+                GameMouse(MouseEvent::up, NimblePoint(event.button.x, event.button.y));
                 break;
             case SDL_QUIT:
                 Quit = true;
@@ -296,4 +304,84 @@ int main(int argc, char* argv[]){
 
     SDL_DestroyWindow(window);
     return 0;
+}
+
+const char* resourceDir = "../";
+
+void HostFont::open(const char* fontname, int ptsize) {
+    if( !TTF_WasInit() ) {
+        TTF_Init();
+    }
+    std::string path = ResourceFilePath(fontname, "ttf");
+    TTF_Font* font = TTF_OpenFont(path.c_str(), ptsize);
+    if( !font ) {
+        ReportResourceError("TTF_OpenFont", path.c_str(), TTF_GetError());
+    }
+    myFont = font;
+}
+
+// Close frees resources used by the given Font object.
+void HostFont::close() {
+    if( myFont!=nullptr ) {
+        TTF_CloseFont(static_cast<TTF_Font*>(myFont));
+        myFont = nullptr;
+    }
+}
+
+// DrawText draws the given text at (x,y) on pm, in the given color and font.
+// The return value indicates the width and height of a bounding box for the text.
+NimbleRect HostFont::draw(NimblePixMap& map, int x, int y, const char* text, const NimbleColor& color) const {
+    TTF_Font* font = static_cast<TTF_Font*>(myFont);
+    if(text[0]) {
+        SDL_Color c;
+        c.r = color.red;
+        c.g = color.green;
+        c.b = color.blue;
+        c.a = color.alpha;
+        if(SDL_Surface* tmp = TTF_RenderUTF8_Solid(font, text, c)) {
+            int width = tmp->w;
+            int height = tmp->h;
+            if(SDL_Surface* dst = SDL_CreateRGBSurfaceFrom(map.at(0, 0), map.width(), map.height(), 32, map.bytesPerRow(),
+                0xFF<<NimbleColor::redShift,
+                0xFF<<NimbleColor::greenShift,
+                0xFF<<NimbleColor::blueShift,
+                0xFF<<NimbleColor::alphaShift)) {
+                SDL_Rect dstRect;
+                dstRect.x = x;
+                dstRect.y = y;
+                dstRect.w = width;
+                dstRect.h = height;
+                if(SDL_BlitSurface(tmp, nullptr, dst, &dstRect)) {
+                    std::fprintf(stderr, "SDL_CreateRGBSurfaceFrom failed: %s\n", TTF_GetError());
+                    Assert(false);
+                }
+                SDL_FreeSurface(dst);
+            } else {
+                std::fprintf(stderr, "SDL_CreateRGBSurfaceFrom failed: %s\n", TTF_GetError());
+                Assert(false);
+            }
+            SDL_FreeSurface(tmp);
+            return NimbleRect(x, y, x+width, y+height);
+        } else {
+            std::fprintf(stderr, "TTF_RenderUTF8_Solid failed: %s\n", TTF_GetError());
+            Assert(false);
+        }
+    }
+    return NimbleRect(x, y, x, y+height());
+}
+
+// Height returns the nominal height of the font.
+int HostFont::height() const {
+    TTF_Font* font = static_cast<TTF_Font*>(myFont);
+    return TTF_FontHeight(font);
+}
+
+NimblePoint HostFont::size(const char* text) const {
+    TTF_Font* font = static_cast<TTF_Font*>(myFont);
+    int w=0, h=0;
+    if( TTF_SizeUTF8(font, text, &w, &h) ) {
+        fprintf(stderr,"HostFont::size failed for %s\n",text);
+        Assert(false);
+    }
+    return NimblePoint(w,h);
 }
