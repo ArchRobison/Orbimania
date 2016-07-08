@@ -213,6 +213,7 @@
     <ClCompile Include="..\..\..\Source\Circle.cpp" />
     <ClCompile Include="..\..\..\Source\Clut.cpp" />
     <ClCompile Include="..\..\..\Source\ColorMatrix.cpp" />
+    <ClCompile Include="..\..\..\Source\FuturePath.cpp" />
     <ClCompile Include="..\..\..\Source\Game.cpp" />
     <ClCompile Include="..\..\..\Source\Arrow.cpp" />
     <ClCompile Include="..\..\..\Source\Handle.cpp" />
@@ -225,6 +226,7 @@
     <ClCompile Include="..\..\..\Source\TimeStep.cpp" />
     <ClCompile Include="..\..\..\Source\Universe.cpp" />
     <ClCompile Include="..\..\..\Source\View.cpp" />
+    <ClCompile Include="..\..\Host_win.cpp" />
     <ClCompile Include="..\Host_sdl.cpp" />
   </ItemGroup>
   <ItemGroup>

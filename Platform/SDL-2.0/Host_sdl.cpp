@@ -18,6 +18,7 @@ limitations under the License.
 #include "SDL.h"
 #include "SDL_image.h"
 #include "SDL_ttf.h"
+#include "SDL_syswm.h"
 #include "../../Source/Host.h"
 #include "../../Source/Game.h"
 #include "../../Source/BuiltFromResource.h"
@@ -27,6 +28,7 @@ limitations under the License.
 #ifdef _WIN32
 #include <direct.h>
 #define getcwd _getcwd
+HWND HostMainWindowHandle;  // Used in Host_win.cpp
 #endif
 
 static SDL_PixelFormat* ScreenFormat;
@@ -248,6 +250,12 @@ int main(int argc, char* argv[]){
         SDL_WINDOW_SHOWN
 #endif
         );
+#ifdef _WIN32
+    SDL_SysWMinfo info;
+    SDL_VERSION(&info.version); // initialize info structure with SDL version info
+    SDL_GetWindowWMInfo(window, &info);
+    HWND hwnd = info.info.win.window;
+#endif
     InitializeKeyTranslationTables();
     ScreenFormat = SDL_AllocFormat(SDL_PIXELFORMAT_ARGB8888);
     if(GameInitialize()) {

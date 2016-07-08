@@ -4,7 +4,7 @@
 
 #include <cstdint>
 #include <cstring>
-#include <initializer_list>]
+#include <initializer_list>
 #include <functional>
 #include "NimbleDraw.h"
 #include "SimpleArray.h"

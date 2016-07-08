@@ -34,6 +34,7 @@
 #include <cmath>
 
 static int WindowWidth, WindowHeight, PanelWidth;
+static float CurrentMousePointX, CurrentMousePointY;    // Current location of mouse in Universe coordinates
 
 #define PROFILE_BUILD 0
 
@@ -54,12 +55,15 @@ void DrawClickable( Clickable& clickable, NimblePixMap& map, int x, int y ) {
 
 static struct MenuItemNewType: MenuItem {
     MenuItemNewType() : MenuItem("New") {}
-    void onSelect() override {}
+    void onSelect() override {
+    }
 } MenuItemNew;
 
 static struct MenuItemOpenType : MenuItem {
     MenuItemOpenType() : MenuItem("Open") {}
-    void onSelect() override {}
+    void onSelect() override {
+        std::string filename = HostGetFileName(HostGetFileNameOp::open, "Orbimania", "orbi");
+    }
 } MenuItemOpen;
 
 static struct MenuItemSaveType : MenuItem {
@@ -79,6 +83,8 @@ void GameUpdateDraw( NimblePixMap& map, NimbleRequest request ) {
     }
     if(request & NimbleDraw) {
         DrawPotentialField(map);
+        extern void DrawFuturePaths(NimblePixMap& map);
+        DrawFuturePaths(map);
         DrawMarkup(map);
         FileMenu.draw(map,0,0);
     }
@@ -174,6 +180,26 @@ static void ReverseDirection() {
     }
 }
 
+void FlipSelectedHandle() {
+    using namespace Universe;
+    size_t k = SelectedHandle.index;
+    switch(SelectedHandle.kind) {
+        case Handle::head: {
+            Vx[k] *= -1;
+            Vy[k] *= -1;
+            break;
+        }
+        case Handle::tailHollow: {
+            Charge[k] *= -1;
+            break;
+        }
+        case Handle::circle: {
+            Mass[k] *= -1;
+            break;
+        }
+    }
+}
+
 void DeleteSelectedHandle() {
     switch( SelectedHandle.kind ) {
         case Handle::tailFull: {
@@ -185,6 +211,45 @@ void DeleteSelectedHandle() {
         }
         default:
             break;
+    }
+}
+
+static struct Clipboard {
+    // True if not empty
+    bool full;  
+    Universe::Float vx, vy, mass, charge;
+} TheClipBoard;
+
+static void CopySelectedHandle() {
+    using namespace Universe;
+    switch(SelectedHandle.kind) {
+        case Handle::tailFull: {
+            size_t k = SelectedHandle.index;
+            auto& c = TheClipBoard;
+            c.vx = Vx[k];
+            c.vy = Vy[k];
+            c.mass = Mass[k];
+            c.charge = Charge[k];
+            c.full = true;
+            break;
+        }
+        default:
+            TheClipBoard.full = false;
+            break;
+    }
+}
+
+static void PasteSelectedHandle() {
+    using namespace Universe;
+    if( TheClipBoard.full && NParticle<N_PARTICLE_MAX) {
+        size_t k = NParticle++;
+        auto& c = TheClipBoard;
+        Sx[k] = CurrentMousePointX;
+        Sy[k] = CurrentMousePointY;
+        Vx[k] = c.vx;
+        Vy[k] = c.vy;
+        Charge[k] = c.charge;
+        Mass[k] = c.mass;
     }
 }
 
@@ -213,7 +278,7 @@ void GameKeyDown( int key ) {
         case 'm': 
             AddRandomParticle();
             break;
-        case 'f': 
+        case 'b': 
             DrawPotentialField = DrawPotentialFieldBilinear;
             break;
         case 'g': 
@@ -225,7 +290,20 @@ void GameKeyDown( int key ) {
         case 'r':
             ReverseDirection();
             break;
+        case 'f':
+            FlipSelectedHandle();
+            break;
         case HOST_KEY_DELETE:
+            DeleteSelectedHandle();
+            break;
+        case 'c':
+            CopySelectedHandle();
+            break;
+        case 'v':
+            PasteSelectedHandle();
+            break;
+        case 'x':
+            CopySelectedHandle();
             DeleteSelectedHandle();
             break;
 #if 0
@@ -250,7 +328,7 @@ void GameKeyDown( int key ) {
     }
 }
 
-static float MousePointX, MousePointY, MouseScalar;
+static float DownMousePointX, DownMousePointY, DownMouseScalar;
 
 void GameMouse( MouseEvent e, const NimblePoint& point ) {
     using namespace Universe;
@@ -259,19 +337,21 @@ void GameMouse( MouseEvent e, const NimblePoint& point ) {
     if( FileMenu.trackMouse(e, x, y ) ) {
         return;
     }
+    CurrentMousePointX = ViewScale*x + ViewOffsetX;
+    CurrentMousePointY = ViewScale*y + ViewOffsetY;
     switch( e ) {
         case MouseEvent::down:
-            MousePointX = ViewScale*x + ViewOffsetX;
-            MousePointY = ViewScale*y + ViewOffsetY;
-            MouseScalar = 0;
+            DownMousePointX = CurrentMousePointX;
+            DownMousePointY = CurrentMousePointY;
+            DownMouseScalar = 0;
             SelectHandle(x, y);
             switch(SelectedHandle.kind) {
                 case Handle::circle: {
-                    MouseScalar = Mass[SelectedHandle.index];
+                    DownMouseScalar = Mass[SelectedHandle.index];
                     break;
                 }
                 case Handle::tailHollow:
-                    MouseScalar = Charge[SelectedHandle.index];
+                    DownMouseScalar = Charge[SelectedHandle.index];
                     break;
                 default:
                     break;
@@ -285,8 +365,8 @@ void GameMouse( MouseEvent e, const NimblePoint& point ) {
         case MouseEvent::drag:
             switch(SelectedHandle.kind) {
                 case Handle::null: {
-                    ViewOffsetX = MousePointX - ViewScale*point.x;
-                    ViewOffsetY = MousePointY - ViewScale*point.y;
+                    ViewOffsetX = DownMousePointX - ViewScale*point.x;
+                    ViewOffsetY = DownMousePointY - ViewScale*point.y;
                     break;
                 }
                 case Handle::tailFull: {
@@ -310,17 +390,17 @@ void GameMouse( MouseEvent e, const NimblePoint& point ) {
                     float cx = Sx[k];
                     float cy = Sy[k];
                     // Original mouse positon in universe
-                    float qx = MousePointX;
-                    float qy = MousePointY;
+                    float qx = DownMousePointX;
+                    float qy = DownMousePointY;
                     // Current mouse position in universe
                     float px = ViewScale*x + ViewOffsetX;
                     float py = ViewScale*y + ViewOffsetY;
-                    float dot = (px-cx)*(MousePointX-cx) + (py-cy)*(MousePointY-cy);
+                    float dot = (px-cx)*(DownMousePointX-cx) + (py-cy)*(DownMousePointY-cy);
                     float ratio = std::sqrt(Dist2(px, py, cx, cy)/Dist2(qx, qy, cx, cy)) * (dot>=0 ? 1 : -1);
                     if(SelectedHandle.kind==Handle::circle) {
-                        Mass[k] = ratio*MouseScalar;
+                        Mass[k] = ratio*DownMouseScalar;
                     } else {
-                        Charge[k] = ratio*MouseScalar;
+                        Charge[k] = ratio*DownMouseScalar;
                     }
                     break;
                 }

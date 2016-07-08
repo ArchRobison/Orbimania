@@ -17,6 +17,8 @@
  OS specific services on the host that are called from OS-independent game code.
 *******************************************************************************/
 
+#include <string>
+
 // Types defined in NimbleDraw.h
 class NimbleColor;
 class NimblePixMap;
@@ -86,3 +88,12 @@ public:
     // Draw text and return bounding box for the text.
     NimbleRect draw(NimblePixMap& map, int x, int y, const char* text, const NimbleColor& color) const;
 };
+
+enum class HostGetFileNameOp {
+    create,
+    open,
+    saveAs
+};
+
+//! Ask user for a filename.  Returns empty string on failure.
+std::string HostGetFileName(HostGetFileNameOp op, const char* fileType, const char* fileSuffix);
