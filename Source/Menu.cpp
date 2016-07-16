@@ -145,10 +145,10 @@ void Menu::draw(NimblePixMap& map, int x, int y) {
             }
             if(i == 0) {
                 map.draw(NimbleRect(x, yi, itemsRect.right - 1, yi + 1), SeparatorColor.pixel());
-            } else if(mi.flags&MenuItem::separator != 0 || i == 0) {
+            } else if((mi.flags&MenuItem::separator) != 0 || i == 0) {
                 map.draw(NimbleRect(labelX - MarginWidth, yi, itemsRect.right - 1, yi + 1), SeparatorColor.pixel());
             }
-            NimbleColor fore = mi.flags&MenuItem::disabled != 0 ? DisabledForegroundColor : ForegroundColor;
+            NimbleColor fore = (mi.flags&MenuItem::disabled) != 0 ? DisabledForegroundColor : ForegroundColor;
             if(mi.check) {
                 CheckFont.draw(map, checkX, yi, mi.check, fore.pixel());
             }

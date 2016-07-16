@@ -6,8 +6,8 @@
 #include <cstring>
 #include <initializer_list>
 #include <functional>
+#include <vector>
 #include "NimbleDraw.h"
-#include "SimpleArray.h"
 
 void InitMenu();
 
@@ -24,7 +24,7 @@ public:
 };
 
 class Menu {
-    SimpleArray<MenuItem*> items;
+    std::vector<MenuItem*> items;
     const char* label;
     short x, y;             // Upper left corner
     uint8_t hilightRow;     // 0 = hide items, 1 = highlight none, 2+k = hilight row k
@@ -36,7 +36,7 @@ class Menu {
     void computeTabSize();
 public:
     Menu() {
-        std::memset(this,0,sizeof(this));
+        std::memset(this,0,sizeof(*this));
     }
     Menu(const char* label_, std::initializer_list<MenuItem*> l) : items(l), label(label_), hilightRow(0), itemHeight(0), itemWidth(0), tabWidth(0) {
         hilightRow = 0;

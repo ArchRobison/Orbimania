@@ -29,6 +29,8 @@ limitations under the License.
 #include <direct.h>
 #define getcwd _getcwd
 HWND HostMainWindowHandle;  // Used in Host_win.cpp
+#elif __APPLE__
+#include <unistd.h>
 #endif
 
 static SDL_PixelFormat* ScreenFormat;

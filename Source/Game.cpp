@@ -62,7 +62,9 @@ static struct MenuItemNewType: MenuItem {
 static struct MenuItemOpenType : MenuItem {
     MenuItemOpenType() : MenuItem("Open") {}
     void onSelect() override {
+#if !__APPLE__
         std::string filename = HostGetFileName(HostGetFileNameOp::open, "Orbimania", "orbi");
+#endif
     }
 } MenuItemOpen;
 
@@ -83,8 +85,10 @@ void GameUpdateDraw( NimblePixMap& map, NimbleRequest request ) {
     }
     if(request & NimbleDraw) {
         DrawPotentialField(map);
+#if !__APPLE__
         extern void DrawFuturePaths(NimblePixMap& map);
         DrawFuturePaths(map);
+#endif
         DrawMarkup(map);
         FileMenu.draw(map,0,0);
     }
