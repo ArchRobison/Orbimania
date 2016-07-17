@@ -26,7 +26,7 @@ LIB += -framework SDL2 -framework SDL2_image -framework SDL2_ttf
 	$(CPLUS) $(CPLUS_FLAGS) -c $(INCLUDE) $<
 
 OBJ = Arrow.o AssertLib.o BuiltFromResource.o Circle.o Clut.o ColorMatrix.o \
-	Game.o Handle.o Menu.o NimbleDraw.o \
+	FuturePath.o Game.o Handle.o Menu.o NimbleDraw.o \
     PotentialFieldBarnesHut.o PotentialFieldBilinear.o PotentialFieldPrecise.o \
 	Render.o TimeStep.o Universe.o View.o Host_sdl.o
 
