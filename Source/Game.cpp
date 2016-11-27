@@ -21,6 +21,7 @@
 #include "Config.h"
 #include "Clut.h"
 #include "NimbleDraw.h"
+#include "File.h"
 #include "Game.h"
 #include "Host.h"
 #include "Menu.h"
@@ -56,19 +57,26 @@ void DrawClickable( Clickable& clickable, NimblePixMap& map, int x, int y ) {
 static struct MenuItemNewType: MenuItem {
     MenuItemNewType() : MenuItem("New") {}
     void onSelect() override {
+		Universe::SetToDefaultParticleArrangment();
     }
 } MenuItemNew;
 
 static struct MenuItemOpenType : MenuItem {
-    MenuItemOpenType() : MenuItem("Open") {}
+    MenuItemOpenType() : MenuItem("Open...") {}
     void onSelect() override {
         std::string filename = HostGetFileName(HostGetFileNameOp::open, "Orbimania", "orbi");
+		if( !filename.empty())
+			ReadUniverseFromFile(filename);
     }
 } MenuItemOpen;
 
 static struct MenuItemSaveType : MenuItem {
-    MenuItemSaveType() : MenuItem("Save") {}
-    void onSelect() override {}
+    MenuItemSaveType() : MenuItem("Save As...") {}
+    void onSelect() override {
+		std::string filename = HostGetFileName(HostGetFileNameOp::saveAs, "Orbimania", "orbi");
+		if( !filename.empty() )
+			WriteUniverseToFile(filename);
+	}
 } MenuItemSave;
 
 static Menu FileMenu("File", {&MenuItemNew, &MenuItemOpen, &MenuItemSave});
@@ -137,9 +145,7 @@ bool GameInitialize() {
         Mass[k] = 1;
     }
 #elif !PROFILE_BUILD
-    NParticle = 2;
-    Charge[0] =  1; Mass[0] = 1; Sx[0] = 0.25; Sy[0] = 0.25; Vx[0] =  0.8; Vy[0] = -0.1;
-    Charge[1] = -1; Mass[1] = 1; Sx[1] = 0.75; Sy[1] = 0.75; Vx[1] = -0.8; Vy[1] =  0.1;
+	SetToDefaultParticleArrangment();
 #else
     // For profiling
     NParticle = 0;
@@ -335,6 +341,8 @@ void GameMouse( MouseEvent e, const NimblePoint& point ) {
     float x = point.x;
     float y = point.y;
     if( FileMenu.trackMouse(e, x, y ) ) {
+		SelectedHandle = Handle(); 
+		DownMouseScalar = 0;
         return;
     }
     CurrentMousePointX = ViewScale*x + ViewOffsetX;

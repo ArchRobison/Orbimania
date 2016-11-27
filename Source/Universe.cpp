@@ -54,4 +54,10 @@ void Recenter() {
     }
 }
 
+void SetToDefaultParticleArrangment() {
+	NParticle = 2;
+	Charge[0] =  1; Mass[0] = 1; Sx[0] = 0.25; Sy[0] = 0.25; Vx[0] =  0.8; Vy[0] = -0.1;
+	Charge[1] = -1; Mass[1] = 1; Sx[1] = 0.75; Sy[1] = 0.75; Vx[1] = -0.8; Vy[1] =  0.1;
+}
+
 } // namespace Universe

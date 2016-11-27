@@ -14,7 +14,7 @@ void InitMenu();
 class MenuItem {
 public:
     virtual void onSelect() = 0;
-    const char* label;
+    const char* label;	// label for item
     uint8_t flags;
     const char* check;  // nullptr or pointer to UTF8 representation of a character to print in "checkmark" position.
     // Flag bits

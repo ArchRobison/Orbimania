@@ -25,6 +25,7 @@ extern Float DeltaT;
 
 void EraseParticle(size_t k);
 void Recenter();
+void SetToDefaultParticleArrangment();
 
 } // namespace Universe
 

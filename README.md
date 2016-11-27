@@ -5,7 +5,8 @@ Orbimania is an N-Body simulator that displays the potential field in real time.
 SDL-2 and Windows operating system.
 
 # Status
-Code is under development.  In particular, the File menu is inoperative.
+Code is under development.  The File menu is work in progress.
+It currently allows you to save the state of the universe or load it from a file.
 
 # Note on Physics
 
